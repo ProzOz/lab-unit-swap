@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>lab-unit-swap</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; background: #0b1020; color: #e8eefc; }
+    main { max-width: 520px; margin: 2.5rem auto; padding: 0 1.2rem; }
+    h1 { font-size: 1.15rem; letter-spacing: .04em; }
+    label, select, input { display: block; width: 100%; margin: .35rem 0; }
+    select, input { background: #151b33; color: inherit; border: 1px solid #2a3358; border-radius: 8px; padding: .55rem .7rem; }
+    .card { background: #12182d; border: 1px solid #243056; border-radius: 14px; padding: 1rem 1.1rem; margin: 1rem 0; }
+    .out { font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+    a { color: #a78bfa; }
+    .hint { color: #8b95b8; font-size: .85rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>lab-unit-swap</h1>
+  <p class="hint">Physics lab pocket converter. Not the booth — that is <a href="https://เรียนควอนตัม.com">เรียนควอนตัม.com</a>.</p>
+  <div class="card">
+    <label>kind
+      <select id="kind">
+        <option value="temp">temperature</option>
+        <option value="length">length</option>
+        <option value="mass">mass</option>
+        <option value="energy">energy</option>
+      </select>
+    </label>
+    <label>value <input id="val" type="number" step="any" value="1" /></label>
+    <label>from <select id="from"></select></label>
+    <label>to <select id="to"></select></label>
+    <p class="out" id="out">—</p>
+  </div>
+</main>
+<script>
+const UNITS = {
+  temp: { C: 1, F: 1, K: 1 },
+  length: { m: 1, cm: 0.01, mm: 0.001, km: 1000, in: 0.0254, ft: 0.3048 },
+  mass: { kg: 1, g: 0.001, mg: 1e-6, lb: 0.45359237 },
+  energy: { J: 1, kJ: 1000, cal: 4.184, eV: 1.602176634e-19 },
+};
+
+function toSI(kind, unit, x) {
+  if (kind === "temp") {
+    if (unit === "C") return x + 273.15;
+    if (unit === "F") return (x - 32) * 5 / 9 + 273.15;
+    return x;
+  }
+  return x * UNITS[kind][unit];
+}
+function fromSI(kind, unit, x) {
+  if (kind === "temp") {
+    if (unit === "C") return x - 273.15;
+    if (unit === "F") return (x - 273.15) * 9 / 5 + 32;
+    return x;
+  }
+  return x / UNITS[kind][unit];
+}
+
+const kindEl = document.getElementById("kind");
+const fromEl = document.getElementById("from");
+const toEl = document.getElementById("to");
+const valEl = document.getElementById("val");
+const outEl = document.getElementById("out");
+
+function fill() {
+  const keys = Object.keys(UNITS[kindEl.value]);
+  fromEl.innerHTML = toEl.innerHTML = keys.map((k) => `<option>${k}</option>`).join("");
+  toEl.selectedIndex = Math.min(1, keys.length - 1);
+  render();
+}
+function render() {
+  const x = Number(valEl.value);
+  if (!Number.isFinite(x)) { outEl.textContent = "?"; return; }
+  const si = toSI(kindEl.value, fromEl.value, x);
+  const y = fromSI(kindEl.value, toEl.value, si);
+  outEl.textContent = `${y.toPrecision(8)} ${toEl.value}`;
+}
+kindEl.addEventListener("change", fill);
+fromEl.addEventListener("change", render);
+toEl.addEventListener("change", render);
+valEl.addEventListener("input", render);
+fill();
+</script>
+</body>
+</html>
